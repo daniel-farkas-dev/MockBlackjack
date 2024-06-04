@@ -30,23 +30,23 @@ public enum Chip {
     }
     public static ArrayList<Chip> breakdown(Chip chip) {
         switch (chip) {
-            case Chip.THOUSAND:
+            case THOUSAND:
                 return new ArrayList<Chip>(
                     Arrays.asList(Chip.FIVE_HUNDRED, Chip.FIVE_HUNDRED)
                 );
-            case Chip.FIVE_HUNDRED:
+            case FIVE_HUNDRED:
                 return new ArrayList<Chip>(
                     Arrays.asList(Chip.HUNDRED, Chip.HUNDRED, Chip.HUNDRED, Chip.HUNDRED, Chip.HUNDRED)
                 );
-            case Chip.HUNDRED:
+            case HUNDRED:
                 return new ArrayList<Chip>(
                     Arrays.asList(Chip.FIFTY, Chip.FIFTY)
                 );
-            case Chip.FIFTY:
+            case FIFTY:
                 return new ArrayList<Chip>(
                     Arrays.asList(Chip.TEN, Chip.TEN, Chip.TEN, Chip.TEN, Chip.TEN)
                 );
-            case Chip.TEN:
+            case TEN:
                 throw new IllegalArgumentException("Cannot breakdown a ten chip");
         }
         return null;

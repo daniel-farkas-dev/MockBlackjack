@@ -1,24 +1,16 @@
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Scanner;
 public class Game {
     private static final int TEN_CHIP = 00, FIFTY_CHIPS = 0, 
         HUNDRED_CHIPS = 0, FIVE_HUNDRED_CHIPS = 0, THOUSAND_CHIPS = 1;
 
-    public ArrayList<Card> deck;
     public ArrayList<Chip> chips, usedChips = new ArrayList<Chip>();
-    public Game() {
-        // initialize and set deck
-        deck = new ArrayList<Card>();
-        for (int i = 0; i < 2; i++) {
-            for (Card.Suit suit : Card.Suit.values()) {
-                for (Card.Rank rank : Card.Rank.values()) {
-                    deck.add(new Card(suit, rank));
-                }
-            }
-        }
-        Collections.shuffle(deck);
+    public ArrayList<Card> shoe;
+    public ArrayList<Card> dealerHand, playerHand;
 
+    public Game() {
         // initialize and set chips
         chips = new ArrayList<Chip>();
         for (int i = 0; i < TEN_CHIP; i++) {
@@ -36,6 +28,10 @@ public class Game {
         for (int i = 0; i < THOUSAND_CHIPS; i++) {
             chips.add(Chip.THOUSAND);
         }
+
+        //initialize shoe
+        shoe = Card.makeShoe();
+        Collections.shuffle(shoe);
     }
     public int currentMoney() {
         int total = 0;
@@ -78,10 +74,40 @@ public class Game {
     }
     public void breakdown(int value) {
         ArrayList<Chip> breakdown = Chip.breakdown(Chip.getChip(value));
-        chips.remove(0);
+        chips.remove(Chip.getChip(value));
         chips.addAll(breakdown);
     }
     public void logUsedChips(Chip chip) {
         usedChips.add(chip);
+    }
+
+
+    public void startRound() {
+        if (shoe.isEmpty() || shoe == null) {
+            shoe = Card.makeShoe(); Collections.shuffle(shoe);
+        }
+
+        // Burn a card
+        Card burn = shoe.remove(0);
+        System.out.println("Burned: " + burn);
+        
+        // Ask for bet
+
+        Scanner scanner = new Scanner(System.in);
+        while (true) {
+            System.out.print("Enter your bet: ");
+            int bet;
+            try {bet = scanner.nextInt();}
+            catch (Exception e) {System.out.println("Invalid bet"); continue;}
+            if (bet(bet)) {break;}
+            else {System.out.println("Invalid bet");}
+        }
+        // Deal cards
+        dealerHand = new ArrayList<Card>(); playerHand = new ArrayList<Card>();
+        dealerHand.add(shoe.remove(0)); playerHand.add(shoe.remove(0));
+        Card hidden = shoe.remove(0); hidden.isFaceUp = false;
+        dealerHand.add(hidden); playerHand.add(shoe.remove(0));
+
+        //TODO: Work on display
     }
 }
