@@ -7,7 +7,17 @@ public class Card {
         HEARTS, DIAMONDS, CLUBS, SPADES
     }
     public enum Rank {
-        ACE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, TEN, JACK, QUEEN, KING
+        ACE(1), TWO(2), THREE(3), FOUR(4), FIVE(5), SIX(6), SEVEN(7),
+        EIGHT(8), NINE(9), TEN(10), JACK(10), QUEEN(10), KING(10);
+
+        int value;
+
+        private Rank(int value) {
+            this.value = value;
+        }
+        public int getValue() {
+            return value;
+        }
     }
 
     private Suit suit;
@@ -21,7 +31,8 @@ public class Card {
     
     @Override
     public String toString() {
-        return rank + " of " + suit;
+        if (!isFaceUp) return "Hidden Card";
+        return rank + "("+ suit.toString().charAt(0) +")";
     }
     // Getters for card values
 
@@ -42,5 +53,9 @@ public class Card {
             }
         }
         return shoe; 
+    }
+
+    public int getValue() {
+        return rank.getValue();
     }
 }

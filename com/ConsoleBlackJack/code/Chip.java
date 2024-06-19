@@ -51,4 +51,11 @@ public enum Chip {
         }
         return null;
     }
+    public static int sumChipValue(ArrayList<Chip> chips) {
+        int total = 0;
+        for (Chip chip : chips) {
+            total += chip.getValue();
+        }
+        return total;
+    }
 }
