@@ -14,6 +14,8 @@ public class Round {
     public enum Actions {
         HIT, STAND, DOUBLE_DOWN, SPLIT, INSURANCE
     }
+    Actions selectedAction;
+    public final Object o = new Object();
 
     public Round (Game game) {
         this.game = game;
@@ -30,7 +32,7 @@ public class Round {
         System.out.println("Burned: " + burn);
     }
 
-    private ArrayList<Chip> getUserBet() {
+    private ArrayList<Chip> getConsoleBet() {
         @SuppressWarnings("resource")
         Scanner scanner = new Scanner(System.in);
         while (true) {
@@ -44,19 +46,44 @@ public class Round {
         }
     }
 
+    public ArrayList<Chip> processBet(String i) {
+        try {
+            wager = Integer.parseInt(i);
+        } catch (Exception e) {
+            System.out.println("Invalid bet");
+        }
+        ArrayList<Chip> a = game.bet(wager, usedChips);
+        if (a.equals(null)) {System.out.println("Invalid bet"); return null;}
+        return a;
+    }
+
     public Game.Results playerTurn() {
         
-        printBoard();
+        // consoleBoard();
+        JFrameBoard();
 
         // Ask for bet
-        usedChips = getUserBet();
+        // usedChips = getConsoleBet();
+        while (true) {
+            synchronized (o) {
+                try {
+                    o.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            usedChips = processBet(game.frame.inputField.getText());
+            if (usedChips != null) break;
+        }
+
+        game.frame.switchSouthPanelState();
 
         // Burn card
         burnCard();
 
         // Deal cards
         dealerHand = new ArrayList<Card>(); playerHand = new ArrayList<Card>();
-        dealerHand.add(game.shoe.remove(0)); playerHand.add(game.shoe.remove(0));
+        dealerHand.add(game.shoe.remove(0)); playerHand.add(game.shoe.remove(0)); 
         Card hidden = game.shoe.remove(0); hidden.isFaceUp = false;
         dealerHand.add(hidden); playerHand.add(game.shoe.remove(0));        
 
@@ -70,50 +97,78 @@ public class Round {
 
         while (true) {
             validateShoe(); //Initialize shoe if empty or null
-            printBoard();
+            // consoleBoard();
+            JFrameBoard();
+            try {
+                Thread.sleep(1500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
 
             if (playerTotal == 21) return Game.Results.BLACKJACK;
+            if (playerTotal == 11 && playerSoft) return Game.Results.BLACKJACK;
             if (playerTotal > 21) return Game.Results.PLAYER_BUST;
 
             // Get user input
-            @SuppressWarnings("resource")
-            String userInput = new Scanner(System.in).nextLine();
+            // @SuppressWarnings("resource")
+            // String userInput = new Scanner(System.in).nextLine();
 
-            if (userInput.equals(">")) {
-                indicator++;
-                if (indicator > 4) indicator = 0;
-                while (!playerActions[indicator]) {
-                    indicator++;
-                    if (indicator > 4) indicator = 0;
+            // if (userInput.equals(">")) {
+            //     indicator++;
+            //     if (indicator > 4) indicator = 0;
+            //     while (!playerActions[indicator]) {
+            //         indicator++;
+            //         if (indicator > 4) indicator = 0;
+            //     }
+            // } else if (userInput.equals("<")) {
+            //     indicator--;
+            //     if (indicator < 0) indicator = 4;
+            //     while (!playerActions[indicator]) {
+            //         indicator--;
+            //         if (indicator < 0) indicator = 4;
+            //     }
+            // } else {
+            //     turn++;
+            //     switch (Actions.values()[indicator]) {
+            //         case HIT:
+            //             playerHand.add(game.shoe.remove(0));
+            //             break;
+            //         case STAND:
+            //             return Game.Results.DEALER_TURN;
+            //         case DOUBLE_DOWN:
+            //         case SPLIT:
+            //         case INSURANCE:
+            //             System.out.println("Not implemented yet, sry");
+            //             break;
+            //     }
+            // }
+            synchronized (o) {
+                try {
+                    o.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
-            } else if (userInput.equals("<")) {
-                indicator--;
-                if (indicator < 0) indicator = 4;
-                while (!playerActions[indicator]) {
-                    indicator--;
-                    if (indicator < 0) indicator = 4;
-                }
-            } else {
-                turn++;
-                switch (Actions.values()[indicator]) {
-                    case HIT:
-                        playerHand.add(game.shoe.remove(0));
-                        break;
-                    case STAND:
-                        return Game.Results.DEALER_TURN;
-                    case DOUBLE_DOWN:
-                    case SPLIT:
-                    case INSURANCE:
-                        System.out.println("Not implemented yet, sry");
-                        break;
-                }
+            }
+            switch (selectedAction) {
+                case HIT:
+                    playerHand.add(game.shoe.remove(0));
+                    break;
+                case STAND:
+                    return Game.Results.DEALER_TURN;
+                case DOUBLE_DOWN:
+                case SPLIT:
+                case INSURANCE:
+                    System.out.println("Not implemented yet, sry");
+                    break;
+
             }
         }
     }
 
     public Game.Results dealerTurn() {
         dealerHand.get(1).isFaceUp = true;
-        printBoard();
+        // consoleBoard();
+        JFrameBoard();
         try {
             Thread.sleep(2500);
         } catch (InterruptedException e) {
@@ -122,12 +177,14 @@ public class Round {
         if (dealerTotal == 21) return Game.Results.DEALER_BLACKJACK;
         while (dealerTotal < 17) {
             dealerHand.add(game.shoe.remove(0));
-            printBoard();
+            // consoleBoard();
+            JFrameBoard();
             try {
                 Thread.sleep(2500);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            if (dealerTotal == 11 && dealerSoft) return Game.Results.DEALER_BLACKJACK;
         }
         if (dealerSoft && dealerTotal <= 11) dealerTotal += 10;
         if (playerSoft && playerTotal <= 11) playerTotal += 10;
@@ -138,23 +195,54 @@ public class Round {
         return Game.Results.TIE;
     } 
 
-    private void printBoard() {
+    private void JFrameBoard() {
         dealerHand = dealerHand == null ? new ArrayList<Card>() : dealerHand;
         playerHand = playerHand == null ? new ArrayList<Card>() : playerHand;
         usedChips = usedChips == null ? new ArrayList<Chip>() : usedChips;
         playerActions = playerActions == null ? new boolean[5] : playerActions;
         dealerTotal = 0; playerTotal = 0;
 
-        System.out.print("\033[H\033[2J");
-        System.out.flush();
+        game.frame.playerHand.removeAll(); game.frame.dealerHand.removeAll();
+        for (Card card : dealerHand) {
+            game.frame.addDealerCard(card);
+            if (card.isFaceUp) {
+                dealerTotal += card.getValue();
+                if (card.getRank() == Card.Rank.ACE) dealerSoft = true;
+            }
+        }
+        if (dealerSoft) game.frame.setDealerTotal(determineSoft(dealerTotal));
+        else game.frame.setDealerTotal(dealerTotal+"");
+        for (Card card : playerHand) {
+            game.frame.addPlayerCard(card);
+            playerTotal += card.getValue();
+            if (card.getRank() == Card.Rank.ACE) playerSoft = true;
+        }
+        if (playerSoft) game.frame.setPlayerTotal(determineSoft(playerTotal));
+        else game.frame.setPlayerTotal(playerTotal+"");
+        // TODO: Implement later
+        // game.frame.setWager(Chip.sumChipValue(usedChips));
+        // game.frame.setPlayerActions(playerActions);
+        // if (wager != null) game.frame.setWager(Chip.sumChipValue(usedChips));
+    }
+    private void consoleBoard() {
+        dealerHand = dealerHand == null ? new ArrayList<Card>() : dealerHand;
+        playerHand = playerHand == null ? new ArrayList<Card>() : playerHand;
+        usedChips = usedChips == null ? new ArrayList<Chip>() : usedChips;
+        playerActions = playerActions == null ? new boolean[5] : playerActions;
+        dealerTotal = 0; playerTotal = 0;
+
+        // System.out.print("\033[H\033[2J");
+        // System.out.flush();
 
         System.out.println("\nDealer's Hand: ");
+        game.frame.playerHand.removeAll(); game.frame.dealerHand.removeAll();
         for (Card card : dealerHand) {
             System.out.print(card + " ");
             if (card.isFaceUp) {
                 dealerTotal += card.getValue();
                 if (card.getRank() == Card.Rank.ACE) dealerSoft = true;
             }
+            // game.frame.addDealerCard(card);
         }
         if (dealerSoft) System.out.println(" | Dealer's Total: " + determineSoft(dealerTotal) + "\n");
         else System.out.println(" | Dealer's Total: " + dealerTotal + "\n");
@@ -165,7 +253,7 @@ public class Round {
             if (card.getRank() == Card.Rank.ACE) playerSoft = true;
         }
         if (playerSoft) System.out.println(" | Player's Total: " + determineSoft(playerTotal) + "\n");
-        else System.out.print(" | Player's Total: " + playerTotal + "\n");
+        else game.frame.setPlayerTotal(playerTotal+"");
         System.out.print("\nCurrent wager: "); usedChips.forEach((Chip c) -> {System.out.print(c+" ");});
         System.out.print("($" + Chip.sumChipValue(usedChips) + ")");
         System.out.print("\n\nPlayer Actions: ");

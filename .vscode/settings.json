@@ -1,6 +1,7 @@
 {
     "java.project.sourcePaths": [
         "com/ConsoleBlackJack/code",
+        "com/ConsoleBlackJack/code/FrameSetup",
         "com/ConsoleBlackJack/bin",
         "com/ConsoleBlackJack/images",
         "com/ConsoleBlackJack/tests"

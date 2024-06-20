@@ -13,6 +13,9 @@ public class Game {
     int dealerTotal = 0, playerTotal = 0;
     boolean dealerSoft = false, playerSoft = false;
 
+    MainFrame frame;
+    Round currentRound;
+
     public enum Results {
         BLACKJACK, DEALER_BLACKJACK, PLAYER_BUST, DEALER_BUST, PLAYER_WIN, DEALER_WIN, TIE, DEALER_TURN
     }
@@ -43,6 +46,10 @@ public class Game {
         //initialize shoe
         shoe = Card.makeShoe();
         Collections.shuffle(shoe);
+
+
+        frame = new MainFrame(this);
+        frame.createFrame();
     }
     public void setChips() {
         chips.sort(Comparator.comparing(Chip::getValue).reversed());
@@ -80,17 +87,20 @@ public class Game {
     }
     public void start() {
         while (Chip.sumChipValue(chips) >= 0) {
-            Round round = new Round(this);
-            switch(round.playerTurn()) {
+            currentRound = new Round(this);
+            switch(currentRound.playerTurn()) {
                 case BLACKJACK:
                     System.out.println("\nBlackjack!");
-                    chips.addAll(round.usedChips); chips.addAll(round.usedChips);
+                    chips.addAll(currentRound.usedChips); chips.addAll(currentRound.usedChips);
+                    frame.switchSouthPanelState();
                     continue;
                 case PLAYER_BUST:
                     System.out.println("\nPlayer Bust!");
+                    frame.switchSouthPanelState();
                     continue;
                 case DEALER_TURN:
                     System.out.println("\nDealer's Turn");
+                    handleWaitError(2500);
                     break;
                 case TIE:
                 case DEALER_BLACKJACK:
@@ -99,41 +109,39 @@ public class Game {
                 case DEALER_WIN:
                     throw new IllegalArgumentException("Invalid state");
             }
-            try {
-                Thread.sleep(4000);
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-            switch (round.dealerTurn()) {
+            switch (currentRound.dealerTurn()) {
                 case DEALER_BLACKJACK:
                     System.out.println("\nDealer Blackjack!");
                     break;
                 case DEALER_BUST:
                     System.out.println("\nDealer Bust!");
-                    chips.addAll(round.usedChips); chips.addAll(round.usedChips);
+                    chips.addAll(currentRound.usedChips); chips.addAll(currentRound.usedChips);
                     break;
                 case PLAYER_WIN:
                     System.out.println("\nPlayer Wins!");
-                    chips.addAll(round.usedChips); chips.addAll(round.usedChips);
+                    chips.addAll(currentRound.usedChips); chips.addAll(currentRound.usedChips);
                     break;
                 case DEALER_WIN:
                     System.out.println("\nDealer Wins!");
                     break;
                 case TIE:
                     System.out.println("\nTie!");
-                    chips.addAll(round.usedChips);
+                    chips.addAll(currentRound.usedChips);
                     break;
                 case BLACKJACK:
                 case PLAYER_BUST:
                 case DEALER_TURN:
                     throw new IllegalArgumentException("Invalid state");
             }
-            try {
-                Thread.sleep(4000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            handleWaitError(4500);
+            frame.switchSouthPanelState();
+        }
+    }
+    public void handleWaitError(int wait) {
+        try {
+            Thread.sleep(wait);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 }
